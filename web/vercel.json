@@ -12,7 +12,7 @@
         { "key": "Cache-Control", "value": "no-cache" },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://telegram.org; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' data: https://herdr-gateway.peacedata.company wss://herdr-gateway.peacedata.company; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'"
+          "value": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://telegram.org; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' data: https://herdr-gateway.peacedata.company wss://herdr-gateway.peacedata.company; frame-src https://*.preview.peacedata.company; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'"
         }
       ]
     }

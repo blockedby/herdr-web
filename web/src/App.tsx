@@ -1,5 +1,7 @@
 import { CommandDraftContext, createCommandDraftStore } from "./commandDrafts";
 import { linkedWorkspaceLabels } from "./workspaceClose";
+import { shouldRevealPreviewDetail, usePreviews } from "./previews";
+import { PreviewRows, PreviewSurface } from "./PreviewSurface";
 import {
   Activity,
   Archive,
@@ -25,6 +27,7 @@ import {
   X,
 } from "lucide-react";
 import {
+  Activity as ReactActivity,
   Fragment,
   Suspense,
   lazy,
@@ -981,6 +984,8 @@ export function App() {
 
 function AppContent({ commandDrafts }: { commandDrafts: ReturnType<typeof createCommandDraftStore> }) {
   const bridge = useBridge();
+  const previews = usePreviews();
+  const previousPreviewSelection = useRef({ selectedId: null as string | null, compact: false, seenOpen: 0 });
   const initialPrefs = useMemo(readDisplayPrefs, []);
   const initialSharedNavigationPrefs = useMemo(readSharedNavigationPrefs, []);
   const initialNavigationSyncMode = useMemo(readNavigationSyncMode, []);
@@ -2424,6 +2429,7 @@ function AppContent({ commandDrafts }: { commandDrafts: ReturnType<typeof create
   };
 
   const openPane = (bridgeId: BridgeId, pane: PaneInfo) => {
+    previews.select(null);
     const runtime = bridge.getRuntime(bridgeId);
     if (!runtime) {
       return;
@@ -2439,6 +2445,12 @@ function AppContent({ commandDrafts }: { commandDrafts: ReturnType<typeof create
       openMobileDetail();
     }
   };
+
+  useEffect(() => {
+    const current = { selectedId: previews.selectedId, compact: isCompactLayout, seenOpen: previews.seenOpen };
+    if (shouldRevealPreviewDetail(previousPreviewSelection.current, current)) openMobileDetail();
+    previousPreviewSelection.current = current;
+  }, [previews.selectedId, previews.seenOpen, isCompactLayout, openMobileDetail]);
 
   const requestTerminalFocus = () => setTerminalFocusToken((token) => token + 1);
   const requestNoteTitleFocus = (bridgeId: BridgeId, noteId: string) => {
@@ -2954,6 +2966,7 @@ function AppContent({ commandDrafts }: { commandDrafts: ReturnType<typeof create
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (previews.selectedId) return;
       const navigationShortcut = isAppNavigationShortcut(event);
       const closeTabShortcut = isCloseTabShortcut(event);
       const newTabShortcut = isNewTabShortcut(event);
@@ -3226,6 +3239,7 @@ function AppContent({ commandDrafts }: { commandDrafts: ReturnType<typeof create
     navigationIsShared,
     paneFocusSupported,
     pinnedAgentKeys,
+    previews.selectedId,
     scope,
     sidebarView,
     selectedPane,
@@ -3802,6 +3816,7 @@ function AppContent({ commandDrafts }: { commandDrafts: ReturnType<typeof create
     <div
       className="app"
       style={appStyle}
+      data-preview-retained={previews.retainedIds.length > 0 ? "true" : "false"}
       data-sidebar={sidebarOpen ? "open" : "closed"}
       data-notes={notesPanelOpen && notesEnabled ? "open" : "closed"}
       data-resizing-sidebar={resizingSidebar ? "true" : "false"}
@@ -3904,11 +3919,12 @@ function AppContent({ commandDrafts }: { commandDrafts: ReturnType<typeof create
           multiHostSpaceSelection={multiHostSpaceSelection}
           activeSpace={activeSpace}
           activeWorkspacesByBridgeId={activeWorkspacesByBridgeId}
-          selectedPane={selectedPane}
+          selectedPane={previews.selectedId ? null : selectedPane}
+          previewRows={(previews.snapshot?.previews ?? []).some((entry) => scope === "all" || !activeSpace || entry.workspaceId === activeSpace.workspace_id || entry.id === previews.selectedId) ? <PreviewRows entries={(previews.snapshot?.previews ?? []).filter((entry) => scope === "all" || !activeSpace || entry.workspaceId === activeSpace.workspace_id || entry.id === previews.selectedId)} previews={previews} onSelect={(id) => { previews.select(id); if (isCompactLayout) openMobileDetail(); }} /> : null}
           onHostScope={setHostScope}
           onScope={setScope}
           onSidebarView={setSidebarView}
-          onSelectNote={selectNote}
+          onSelectNote={(bridgeId, noteId) => { previews.select(null); selectNote(bridgeId, noteId); }}
           onCreateNote={() => void createDetachedBridgeNote()}
           onAgentPinnedOnly={setAgentPinnedOnly}
           onAgentActiveOnly={setAgentActiveOnly}
@@ -3922,9 +3938,9 @@ function AppContent({ commandDrafts }: { commandDrafts: ReturnType<typeof create
           onReorderSpace={(bridgeId, workspaceId, beforeWorkspaceId, keepMode) =>
             reorderSpace(bridgeId, workspaceId, beforeWorkspaceId, keepMode)
           }
-          onSelectBridge={setSelectedBridgeId}
-          onSelectSpace={selectSpace}
-          onSelectTab={selectTab}
+          onSelectBridge={(bridgeId) => { previews.select(null); setSelectedBridgeId(bridgeId); }}
+          onSelectSpace={(bridgeId, workspaceId) => { previews.select(null); selectSpace(bridgeId, workspaceId); }}
+          onSelectTab={(bridgeId, tabId) => { previews.select(null); selectTab(bridgeId, tabId); }}
           onSelectPane={openPane}
           onRefresh={refreshNow}
           onRefreshBridge={(bridgeId) => {
@@ -4017,6 +4033,7 @@ function AppContent({ commandDrafts }: { commandDrafts: ReturnType<typeof create
         />
       </aside>
 
+      <ReactActivity mode={previews.selectedId ? "hidden" : "visible"}>
       <section className="stage" aria-label="Terminal">
         <TabBar
           snapshot={snapshot}
@@ -4222,6 +4239,8 @@ function AppContent({ commandDrafts }: { commandDrafts: ReturnType<typeof create
           <div className="terminal-stage" aria-hidden="true" />
         )}
       </section>
+      </ReactActivity>
+      <PreviewSurface previews={previews} compact={isCompactLayout} onBack={() => previews.select(null)} onMenu={isCompactLayout ? closeMobileDetail : () => setSidebarOpen((open) => !open)} spaceLabel={snapshot?.workspaces.find((workspace) => workspace.workspace_id === previews.snapshot?.previews.find((entry) => entry.id === previews.selectedId)?.workspaceId)?.label ?? null} />
 
       {notesPanelOpen && notesEnabled ? (
         <NotesSurface
@@ -6136,6 +6155,7 @@ function Switcher({
   activeSpace,
   activeWorkspacesByBridgeId,
   selectedPane,
+  previewRows,
   onHostScope,
   onScope,
   onSidebarView,
@@ -6194,6 +6214,7 @@ function Switcher({
   activeSpace: WorkspaceInfo | null;
   activeWorkspacesByBridgeId: Record<string, string>;
   selectedPane: PaneInfo | null;
+  previewRows: ReactNode;
   onHostScope: (scope: HostScope) => void;
   onScope: (scope: Scope) => void;
   onSidebarView: (view: SidebarView) => void;
@@ -7500,7 +7521,7 @@ function Switcher({
             ) : null}
 
             {/* PANES ----------------------------------------------------- */}
-            {notesViewActive ||
+            {notesViewActive || previewRows ||
             (hostScope === "all" ? hasListSnapshot : snapshot && snapshot.workspaces.length > 0) ? (
             <section className="sec" data-sidebar-section="content">
               <div className="sec-head">
@@ -7615,7 +7636,7 @@ function Switcher({
               {notesViewActive ? (
                 renderNoteRows()
               ) : sidebarView === "agents" ? (
-                agentPanes.length === 0 && disconnectedBridgeViews.length === 0 ? (
+                agentPanes.length === 0 && disconnectedBridgeViews.length === 0 && !previewRows ? (
                   <div className="empty">
                     <strong>
                       {emptyAgentListTitle(effectiveAgentPinnedOnly, agentActiveOnly)}
@@ -7658,6 +7679,7 @@ function Switcher({
               ) : (
                 renderTabGroups()
               )}
+              {!notesViewActive ? previewRows : null}
             </section>
             ) : null}
           </>

@@ -1,0 +1,23 @@
+[Unit]
+Description=Private Herdr localhost preview broker
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/code/tools/herdr-env/herdr-web/gateway
+EnvironmentFile=%h/code/tools/herdr-env/.env
+Environment=HERDR_PREVIEW_SOCKET=%t/herdr-preview/control.sock
+Environment=HERDR_PREVIEW_STATE=%h/code/tools/herdr-env/preview-registry.json
+RuntimeDirectory=herdr-preview
+RuntimeDirectoryMode=0700
+ExecStart=/usr/bin/env node preview-broker.mjs
+Restart=on-failure
+RestartSec=2
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=%h/code/tools/herdr-env %t/herdr-preview
+
+[Install]
+WantedBy=default.target

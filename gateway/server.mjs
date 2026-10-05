@@ -9,6 +9,8 @@ import {
   verifySession,
 } from "./auth.mjs";
 
+import { createPreviewGateway, readPreviewConfig } from "./preview-gateway.mjs";
+
 const MAX_BODY = 25 * 1024 * 1024;
 const MAX_BUFFER = 8 * 1024 * 1024;
 const WS_PATHS = new Set([
@@ -62,12 +64,14 @@ export function createGateway(config) {
     maxPayload: 1024 * 1024,
     perMessageDeflate: false,
   });
+  const previews = config.preview ? createPreviewGateway(config) : null;
   const peers = new Set();
   const loginAttempts = new Map();
   const host = new URL(config.publicOrigin).host;
   const bridgeHost = new URL(config.bridgeOrigin).host;
   const server = http.createServer(async (req, res) => {
     res.setHeader("cache-control", "no-store");
+    if (previews && (await previews.handle(req, res))) return;
     if (req.headers.host !== host)
       return json(res, 403, { error: "Invalid host" });
     if (req.url === "/healthz" && req.method === "GET")
@@ -123,6 +127,7 @@ export function createGateway(config) {
       res.setHeader("set-cookie", COOKIE_EXPIRED);
       return json(res, 401, { error: "Authentication required" });
     }
+    if (previews && (await previews.api(req, res, session))) return;
     if (!path.startsWith("/api/") || !["GET", "POST"].includes(req.method))
       return json(res, 404, { error: "Not found" });
     if (Number(req.headers["content-length"] ?? 0) > MAX_BODY)
@@ -180,84 +185,92 @@ export function createGateway(config) {
   server.headersTimeout = 10000;
   server.requestTimeout = 30000;
   server.on("upgrade", (req, socket, head) => {
-    const path = route(req.url);
-    const session = verifySession(req.headers.cookie, config);
-    if (
-      req.headers.host !== host ||
-      req.headers.origin !== config.frontendOrigin ||
-      !session ||
-      !WS_PATHS.has(path)
-    ) {
-      socket.end("HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n");
-      return;
-    }
-    const upstream = new WebSocket(
-      config.upstream.replace("http:", "ws:") + req.url,
-      {
-        headers: { host: bridgeHost, origin: config.bridgeOrigin },
-        handshakeTimeout: 5000,
-        maxPayload: MAX_BUFFER,
-        perMessageDeflate: false,
-      },
-    );
-    socket.on("error", () => upstream.terminate());
-    const abandon = () => upstream.terminate();
-    socket.once("close", abandon);
-    upstream.once("error", () => {
-      if (!socket.destroyed)
-        socket.end("HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n");
-    });
-    upstream.once("open", () => {
-      if (socket.destroyed || !verifySession(req.headers.cookie, config)) {
-        upstream.terminate();
-        socket.destroy();
+    void (async () => {
+      if (previews && (await previews.upgrade(req, socket, head))) return;
+      const path = route(req.url);
+      const session = verifySession(req.headers.cookie, config);
+      if (
+        req.headers.host !== host ||
+        req.headers.origin !== config.frontendOrigin ||
+        !session ||
+        !WS_PATHS.has(path)
+      ) {
+        socket.end("HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n");
         return;
       }
-      wss.handleUpgrade(req, socket, head, (client) => {
-        socket.removeListener("close", abandon);
-        peers.add(upstream);
-        peers.add(client);
-        const expiry = setTimeout(
-          () => {
-            client.close(4401, "Session expired");
-            upstream.terminate();
-          },
-          Math.max(1, session.expiresAt * 1000 - Date.now()),
-        );
-        expiry.unref();
-        const forward = (destination, data, binary) => {
-          if (destination.readyState !== WebSocket.OPEN) return;
-          if (destination.bufferedAmount + data.length > MAX_BUFFER) {
-            client.close(1013, "Slow connection");
-            upstream.terminate();
-            return;
-          }
-          destination.send(data, { binary }, (error) => {
-            if (error) {
-              client.terminate();
-              upstream.terminate();
-            }
-          });
-        };
-        client.on("message", (data, binary) => forward(upstream, data, binary));
-        upstream.on("message", (data, binary) => forward(client, data, binary));
-        client.on("error", () => upstream.terminate());
-        upstream.on("error", () => client.terminate());
-        client.on("close", () => {
-          clearTimeout(expiry);
-          peers.delete(client);
-          peers.delete(upstream);
+      const upstream = new WebSocket(
+        config.upstream.replace("http:", "ws:") + req.url,
+        {
+          headers: { host: bridgeHost, origin: config.bridgeOrigin },
+          handshakeTimeout: 5000,
+          maxPayload: MAX_BUFFER,
+          perMessageDeflate: false,
+        },
+      );
+      socket.on("error", () => upstream.terminate());
+      const abandon = () => upstream.terminate();
+      socket.once("close", abandon);
+      upstream.once("error", () => {
+        if (!socket.destroyed)
+          socket.end("HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n");
+      });
+      upstream.once("open", () => {
+        if (socket.destroyed || !verifySession(req.headers.cookie, config)) {
           upstream.terminate();
-        });
-        upstream.on("close", () => {
-          clearTimeout(expiry);
-          peers.delete(upstream);
-          client.close(1012, "Bridge disconnected");
+          socket.destroy();
+          return;
+        }
+        wss.handleUpgrade(req, socket, head, (client) => {
+          socket.removeListener("close", abandon);
+          peers.add(upstream);
+          peers.add(client);
+          const expiry = setTimeout(
+            () => {
+              client.close(4401, "Session expired");
+              upstream.terminate();
+            },
+            Math.max(1, session.expiresAt * 1000 - Date.now()),
+          );
+          expiry.unref();
+          const forward = (destination, data, binary) => {
+            if (destination.readyState !== WebSocket.OPEN) return;
+            if (destination.bufferedAmount + data.length > MAX_BUFFER) {
+              client.close(1013, "Slow connection");
+              upstream.terminate();
+              return;
+            }
+            destination.send(data, { binary }, (error) => {
+              if (error) {
+                client.terminate();
+                upstream.terminate();
+              }
+            });
+          };
+          client.on("message", (data, binary) =>
+            forward(upstream, data, binary),
+          );
+          upstream.on("message", (data, binary) =>
+            forward(client, data, binary),
+          );
+          client.on("error", () => upstream.terminate());
+          upstream.on("error", () => client.terminate());
+          client.on("close", () => {
+            clearTimeout(expiry);
+            peers.delete(client);
+            peers.delete(upstream);
+            upstream.terminate();
+          });
+          upstream.on("close", () => {
+            clearTimeout(expiry);
+            peers.delete(upstream);
+            client.close(1012, "Bridge disconnected");
+          });
         });
       });
-    });
+    })().catch(() => socket.destroy());
   });
   server.on("close", () => {
+    previews?.close();
     for (const peer of peers) peer.terminate();
     wss.close();
   });
@@ -270,6 +283,7 @@ if (
 ) {
   try {
     const config = readConfig(process.env);
+    config.preview = readPreviewConfig(process.env, config);
     const server = createGateway(config);
     server.listen(config.port, "127.0.0.1", () =>
       console.log("Herdr gateway listening on loopback"),

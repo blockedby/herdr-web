@@ -13,6 +13,9 @@ export default [
         URLSearchParams: "readonly",
         setTimeout: "readonly",
         clearTimeout: "readonly",
+        fetch: "readonly",
+        AbortSignal: "readonly",
+        structuredClone: "readonly",
       },
     },
     rules: {
