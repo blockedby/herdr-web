@@ -1,0 +1,24 @@
+.telegram-gate {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: max(24px, env(safe-area-inset-top))
+    max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom))
+    max(24px, env(safe-area-inset-left));
+  background: #11111b;
+  color: #cdd6f4;
+  font:
+    16px/1.6 system-ui,
+    sans-serif;
+  text-align: center;
+}
+.telegram-gate > div {
+  max-width: 420px;
+}
+.telegram-gate h1 {
+  font-size: 32px;
+  letter-spacing: -1px;
+}
+.telegram-gate a {
+  color: #89b4fa;
+}

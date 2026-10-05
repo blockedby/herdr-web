@@ -6,6 +6,9 @@
 
 ### Added
 
+- Optional private Telegram Mini App mode with owner-only login, an authenticated HTTP/WebSocket
+  gateway and outbound SSH tunnel setup. [PR #1](https://github.com/blockedby/herdr-web/pull/1).
+
 ### Changed
 
 ### Fixed

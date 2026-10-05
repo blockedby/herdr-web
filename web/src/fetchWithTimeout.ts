@@ -1,3 +1,5 @@
+import { bridgeFetch } from "./telegram";
+
 export const BRIDGE_FETCH_TIMEOUT_MS = 5000;
 
 export type FetchWithTimeoutInit = RequestInit & {
@@ -21,7 +23,7 @@ export async function fetchWithTimeout(
     controller.abort(abortError());
   }, timeoutMs);
   try {
-    return await fetch(input, { ...init, signal: controller.signal });
+    return await bridgeFetch(input, { ...init, signal: controller.signal });
   } finally {
     globalThis.clearTimeout(timer);
     signal?.removeEventListener("abort", abortFromCaller);

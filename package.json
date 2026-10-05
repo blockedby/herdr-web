@@ -20,8 +20,10 @@
     "android:open": "cap open android",
     "package:tarball": "scripts/package-tarball.sh",
     "build": "npm run build:web && npm run bridge:build",
-    "test": "npm run test:dev && npm run test:release && npm run test:web && npm run bridge:test",
-    "lint": "npm run lint:web && npm run bridge:fmt",
+    "gateway:check": "npm run check --prefix gateway",
+    "gateway:lint": "web/node_modules/.bin/eslint --config gateway/eslint.config.mjs gateway --max-warnings=0",
+    "test": "npm run test:dev && npm run test:release && npm run test:web && npm run bridge:test && npm run gateway:check",
+    "lint": "npm run lint:web && npm run bridge:fmt && npm run gateway:lint",
     "check": "npm run vendor:check && npm run lint && npm run test && npm run build"
   },
   "devDependencies": {

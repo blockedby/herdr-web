@@ -1,0 +1,17 @@
+{
+  "name": "herdr-telegram-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test *.test.mjs",
+    "check": "node --check auth.mjs && node --check server.mjs && npm test"
+  },
+  "dependencies": {
+    "ws": "8.22.0"
+  }
+}

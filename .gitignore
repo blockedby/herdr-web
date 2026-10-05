@@ -1,4 +1,11 @@
 /node_modules/
+/gateway/node_modules/
+.env
+.env.*
+!.env.example
+.vercel/
+# Local deployment and owner-device verification notes.
+/docs/telegram-verification.md
 /web/node_modules/
 /web/dist/
 /web/.vite/
