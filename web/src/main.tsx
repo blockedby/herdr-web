@@ -5,6 +5,8 @@ import { App } from "./App";
 import { BridgeProvider } from "./bridge";
 import { startNativeControls } from "./native";
 import "./styles.css";
+import "./telegram.css";
+import { TelegramGate } from "./TelegramGate";
 
 startNativeControls();
 
@@ -16,8 +18,10 @@ if (!root) {
 
 createRoot(root).render(
   <StrictMode>
-    <BridgeProvider>
-      <App />
-    </BridgeProvider>
+    <TelegramGate>
+      <BridgeProvider>
+        <App />
+      </BridgeProvider>
+    </TelegramGate>
   </StrictMode>,
 );

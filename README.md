@@ -1,5 +1,23 @@
 # herdr-web
 
+## This fork
+
+A personal fork of [kcosr/herdr-web](https://github.com/kcosr/herdr-web), with private
+Telegram access added:
+
+- **Telegram Mini App:** open your Herdr workspaces and terminals directly inside Telegram.
+- **Owner-only access:** Telegram sign-in protects the gateway; bot credentials stay on the server.
+- **Remote access without Tailscale:** a Vercel frontend and VPS gateway reach the home PC through
+  an outbound SSH tunnel, even behind CGNAT.
+- **Existing modes preserved:** standalone browser/LAN and Android access still work without
+  enabling Telegram mode.
+
+Tested with our custom Herdr **0.9.2** (terminal protocol **22**), including terminal rendering
+inside Telegram on a Pixel 7 Pro. The custom Herdr daemon itself is maintained separately.
+See [Telegram setup](docs/telegram.md) for deployment and configuration.
+
+---
+
 > This repository is not associated with, endorsed by, or maintained by the official Herdr project.
 > It is experimental, Herdr compatibility code is vendored, and the runtime/API shape is expected to
 > change.
@@ -30,16 +48,16 @@ navigation, multi-client viewing, mobile input controls, and synchronized pane s
 
 ## Screenshots
 
-| Desktop | Android tablet |
-|:--:|:--:|
+|                                          Desktop                                           |                                              Android tablet                                              |
+| :----------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------: |
 | <img src="docs/images/desktop.png" alt="herdr-web desktop terminal workspace" width="640"> | <img src="docs/images/android-tablet.png" alt="herdr-web Android tablet terminal workspace" width="640"> |
 
-| Android phone switcher | Android phone terminal |
-|:--:|:--:|
+|                                        Android phone switcher                                         |                                        Android phone terminal                                         |
+| :---------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------: |
 | <img src="docs/images/android-phone-switcher.png" alt="herdr-web Android phone switcher" width="260"> | <img src="docs/images/android-phone-terminal.png" alt="herdr-web Android phone terminal" width="260"> |
 
-| Android bridge configuration |
-|:--:|
+|                                                  Android bridge configuration                                                  |
+| :----------------------------------------------------------------------------------------------------------------------------: |
 | <img src="docs/images/android-phone-bridge-settings.png" alt="herdr-web Android bridge settings and color picker" width="260"> |
 
 ## Layout
@@ -118,6 +136,7 @@ See [docs/packaging.md](docs/packaging.md) for release artifact layout and
 ```bash
 npm install
 npm install --prefix web
+npm install --prefix gateway
 ```
 
 ## Development Server (HMR)
@@ -177,6 +196,10 @@ The Android app is a Capacitor shell around the bundled `web/dist` assets. It st
 and uses the Bridge area in Settings to save one or more Herdr bridge URLs. Browser-served builds
 still default to the same-origin bridge that served the page. See [docs/android.md](docs/android.md)
 for HTTP/cleartext behavior, Android SDK setup, and APK verification notes.
+
+## Private Telegram access
+
+Optional Telegram Mini App mode lets the owner open Herdr inside Telegram while the agents stay on a home computer, even behind a private IP. It uses a protected gateway and an outbound SSH tunnel; Tailscale is not required. See [Telegram setup](docs/telegram.md).
 
 ## Settings
 
@@ -368,17 +391,17 @@ These app shortcuts are ignored while dialogs, menus, and normal text inputs are
 work when the terminal's hidden keyboard input has focus. OS-reserved shortcuts such as `Cmd+Tab`,
 `Meta+Tab`, or some `Alt+Tab` setups may not reach the browser.
 
-| Action | macOS | Windows/Linux |
-| --- | --- | --- |
-| Select previous/next agent pane | `Cmd/Option+Shift+Up/Down` | `Meta/Alt+Shift+Up/Down` |
-| Select previous/next tab in the active space | `Cmd/Option+Shift+Left/Right` | `Meta/Alt+Shift+Left/Right` |
-| Focus split left/down/up/right | `Cmd/Option(+Shift)+H/J/K/L` | `Meta/Alt(+Shift)+H/J/K/L` |
-| Cycle split next | `Cmd/Option+Tab` | `Meta/Alt+Tab` |
-| Cycle split previous | `Cmd/Option+Shift+Tab` | `Meta/Alt+Shift+Tab` |
-| Split selected pane down | `Cmd/Option+Shift+V` | `Meta/Alt+Shift+V` |
-| Split selected pane right | `Cmd/Option+Shift+-` | `Meta/Alt+Shift+-` |
-| Open the new-tab launch modal | `Cmd/Option+Shift+T` | `Meta/Alt+Shift+T` |
-| Confirm close for the focused split, or tab when only one split exists | `Cmd/Option+Shift+X` | `Meta/Alt+Shift+X` |
+| Action                                                                 | macOS                         | Windows/Linux               |
+| ---------------------------------------------------------------------- | ----------------------------- | --------------------------- |
+| Select previous/next agent pane                                        | `Cmd/Option+Shift+Up/Down`    | `Meta/Alt+Shift+Up/Down`    |
+| Select previous/next tab in the active space                           | `Cmd/Option+Shift+Left/Right` | `Meta/Alt+Shift+Left/Right` |
+| Focus split left/down/up/right                                         | `Cmd/Option(+Shift)+H/J/K/L`  | `Meta/Alt(+Shift)+H/J/K/L`  |
+| Cycle split next                                                       | `Cmd/Option+Tab`              | `Meta/Alt+Tab`              |
+| Cycle split previous                                                   | `Cmd/Option+Shift+Tab`        | `Meta/Alt+Shift+Tab`        |
+| Split selected pane down                                               | `Cmd/Option+Shift+V`          | `Meta/Alt+Shift+V`          |
+| Split selected pane right                                              | `Cmd/Option+Shift+-`          | `Meta/Alt+Shift+-`          |
+| Open the new-tab launch modal                                          | `Cmd/Option+Shift+T`          | `Meta/Alt+Shift+T`          |
+| Confirm close for the focused split, or tab when only one split exists | `Cmd/Option+Shift+X`          | `Meta/Alt+Shift+X`          |
 
 ## Runtime Model
 
