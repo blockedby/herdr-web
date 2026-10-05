@@ -3,10 +3,12 @@
 ## This fork
 
 A personal fork of [kcosr/herdr-web](https://github.com/kcosr/herdr-web), with private
-Telegram access added:
+Telegram access and localhost previews added:
 
 - **Telegram Mini App:** open your Herdr workspaces and terminals directly inside Telegram.
 - **Owner-only access:** Telegram sign-in protects the gateway; bot credentials stay on the server.
+- **Localhost previews:** open dev-server pages beside agents inside Herdr, and close them without
+  stopping the app. Agents can use the installable `herdr-preview` skill.
 - **Remote access without Tailscale:** a Vercel frontend and VPS gateway reach the home PC through
   an outbound SSH tunnel, even behind CGNAT.
 - **Existing modes preserved:** standalone browser/LAN and Android access still work without
@@ -14,7 +16,8 @@ Telegram access added:
 
 Tested with our custom Herdr **0.9.2** (terminal protocol **22**), including terminal rendering
 inside Telegram on a Pixel 7 Pro. The custom Herdr daemon itself is maintained separately.
-See [Telegram setup](docs/telegram.md) for deployment and configuration.
+See [Telegram setup](docs/telegram.md) and [localhost previews](docs/previews.md) for setup.
+Install the preview skill with `npx skills add blockedby/herdr-web --skill herdr-preview`.
 
 ---
 
