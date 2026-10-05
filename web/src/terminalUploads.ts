@@ -1,3 +1,5 @@
+import { bridgeFetch } from "./telegram";
+
 export type UploadCandidate = {
   blob: Blob;
   name: string | null;
@@ -54,7 +56,7 @@ async function uploadFile(
   } else if (renameConflicts) {
     params.set("rename_conflicts", "true");
   }
-  const response = await fetch(httpUrl("/api/uploads", params), {
+  const response = await bridgeFetch(httpUrl("/api/uploads", params), {
     method: "POST",
     headers: file.blob.type ? { "content-type": file.blob.type } : undefined,
     body: file.blob,

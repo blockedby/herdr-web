@@ -1,6 +1,7 @@
 // Mutating commands proxied through the bridge's allow-listed /api/command.
 
 import type { BridgeHttpUrl } from "./bridgeApi";
+import { bridgeFetch } from "./telegram";
 import type { LaunchSpec, SplitDirection } from "./launch";
 
 export type CommandResult = { type?: string; [key: string]: unknown };
@@ -26,7 +27,7 @@ async function runCommand(
   method: string,
   params: Record<string, unknown>,
 ): Promise<CommandResult> {
-  const response = await fetch(httpUrl("/api/command"), {
+  const response = await bridgeFetch(httpUrl("/api/command"), {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ method, params }),
@@ -50,7 +51,7 @@ async function runLaunchPreset(
   httpUrl: BridgeHttpUrl,
   body: Record<string, unknown>,
 ): Promise<LaunchPresetResult> {
-  const response = await fetch(httpUrl("/api/launcher-presets/launch"), {
+  const response = await bridgeFetch(httpUrl("/api/launcher-presets/launch"), {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),

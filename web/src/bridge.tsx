@@ -11,6 +11,7 @@ import type { ReactNode } from "react";
 import { Capacitor } from "@capacitor/core";
 import { Preferences } from "@capacitor/preferences";
 import { fetchWithTimeout } from "./fetchWithTimeout";
+import { telegramBridgeBaseUrl } from "./telegram";
 import { addNativeResumeHandler } from "./native";
 
 export const SAME_ORIGIN_BRIDGE_ID = "same-origin";
@@ -936,6 +937,7 @@ export function buildHttpUrl(
   path: string,
   query?: URLSearchParams,
 ): string {
+  baseUrl = telegramBridgeBaseUrl(baseUrl);
   const normalizedPath = normalizeEndpointPath(path);
   const suffix = query && query.toString() ? `?${query.toString()}` : "";
   if (!baseUrl) {
@@ -953,6 +955,7 @@ export function buildWsUrl(
   path: string,
   query?: URLSearchParams,
 ): string {
+  baseUrl = telegramBridgeBaseUrl(baseUrl);
   const normalizedPath = normalizeEndpointPath(path);
   const suffix = query && query.toString() ? `?${query.toString()}` : "";
   if (!baseUrl) {
