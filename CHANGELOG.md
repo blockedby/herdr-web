@@ -17,7 +17,8 @@
 ### Fixed
 
 - Keep agents and terminals visible when reopening Herdr instead of replaying an
-  old preview-open request and automatically loading T3 Code or another saved app.
+  old preview-open request and automatically loading T3 Code or another saved app;
+  reset stale mobile detail history so Back returns to the switcher after reload.
   [PR #4](https://github.com/blockedby/herdr-web/pull/4).
 ### Removed
 

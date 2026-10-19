@@ -35,6 +35,8 @@ Reopening Herdr lists saved previews without opening them or loading their frame
 Select a preview to open it; a new agent open request received while Herdr is
 connected still selects it. Old saved open requests never replace the terminal
 when the Mini App reloads or the preview broker restarts.
+Reloading a mobile detail view also resets its current history entry to the
+workspace list, so opening an agent or preview does not require multiple Back taps.
 
 ## Computer-side installation
 

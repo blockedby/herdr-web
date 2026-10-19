@@ -1586,8 +1586,19 @@ function AppContent({ commandDrafts }: { commandDrafts: ReturnType<typeof create
   }, [activeMenuItems.length, menu]);
 
   const ensureMobileSidebarHistory = () => {
-    if (!isCompactLayoutRef.current || isMobileDetailHistoryState(window.history.state)) {
+    if (!isCompactLayoutRef.current) {
       return;
+    }
+    if (isMobileDetailHistoryState(window.history.state)) {
+      if (showDetailRef.current) return;
+      // A reload starts on the switcher, even if this history entry was a
+      // terminal/preview detail before reload. Do not stack a second detail
+      // entry on top of it when the user next opens an agent.
+      window.history.replaceState(
+        withMobileSidebarHistoryState(window.history.state),
+        "",
+        window.location.href,
+      );
     }
     if (isMobileSidebarHistoryState(window.history.state)) {
       mobileSidebarHistoryRef.current = true;
