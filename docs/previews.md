@@ -4,6 +4,9 @@ The optional preview broker lets an agent open a locally running application ins
 
 This feature uses the [private Telegram gateway](telegram.md). Standalone/LAN/Android terminal access is unchanged. It does not expose a general-purpose unauthenticated localhost tunnel.
 
+To open the running T3 Code desktop environment as a preview with automatic browser
+pairing, use the optional [T3 Code companion](t3-code.md).
+
 ## Agent commands and skill
 
 Install the skill from the fork:

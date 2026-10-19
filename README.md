@@ -9,6 +9,8 @@ Telegram access and localhost previews added:
 - **Owner-only access:** Telegram sign-in protects the gateway; bot credentials stay on the server.
 - **Localhost previews:** open dev-server pages beside agents inside Herdr, and close them without
   stopping the app. Agents can use the installable `herdr-preview` skill.
+- **T3 Code in Telegram:** optionally open your running T3 Code desktop environment alongside
+  Herdr with automatic browser pairing. See [T3 Code setup](docs/t3-code.md).
 - **Remote access without Tailscale:** a Vercel frontend and VPS gateway reach the home PC through
   an outbound SSH tunnel, even behind CGNAT.
 - **Existing modes preserved:** standalone browser/LAN and Android access still work without

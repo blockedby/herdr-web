@@ -1,0 +1,18 @@
+[Unit]
+Description=T3 Code Nightly companion for authenticated Herdr Telegram previews
+After=herdr-preview.service
+Wants=herdr-preview.service
+
+[Service]
+Type=simple
+WorkingDirectory=%h/code/tools/herdr-env/herdr-web/gateway
+ExecStart=/usr/bin/env node t3-preview.mjs
+Environment=T3CODE_HOME=%h/.t3
+Environment=T3CODE_CLI_PATH=%h/.t3/bin/t3
+Restart=on-failure
+RestartSec=3
+UMask=0077
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target

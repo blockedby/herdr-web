@@ -6,6 +6,9 @@
 
 ### Added
 
+- Optional T3 Code companion for opening the running desktop environment in the private
+  Telegram Mini App, with automatic browser pairing through the existing preview gateway.
+  [PR #3](https://github.com/blockedby/herdr-web/pull/3).
 - Optional private Telegram Mini App mode with owner-only login, an authenticated HTTP/WebSocket
   gateway and outbound SSH tunnel setup. [PR #1](https://github.com/blockedby/herdr-web/pull/1).
 
