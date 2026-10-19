@@ -16,6 +16,8 @@
 
 ### Fixed
 
+- Keep agents and terminals visible when reopening Herdr instead of replaying an
+  old preview-open request and automatically loading T3 Code or another saved app.
 ### Removed
 
 ## [0.6.2] - 2026-10-07

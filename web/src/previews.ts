@@ -155,7 +155,11 @@ export function previewReducer(
   const snapshot = action.value;
   const sameEpoch = state.snapshot?.epoch === snapshot.epoch;
   if (sameEpoch && snapshot.revision < state.revision) return state;
-  const seenOpen = sameEpoch ? state.seenOpen : 0;
+  // Initial/replacement snapshots list saved previews; only later open requests
+  // should replace the terminal the user came here to see.
+  const seenOpen = sameEpoch
+    ? state.seenOpen
+    : (snapshot.lastOpen?.revision ?? 0);
   const exists = (id: string) =>
     snapshot.previews.some((entry) => entry.id === id);
   let selectedId =

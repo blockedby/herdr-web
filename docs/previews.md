@@ -31,6 +31,11 @@ The standalone equivalent is `node /path/to/herdr-web/skills/herdr-preview/scrip
 
 Commands return JSON. Reopening the same origin in the same workspace updates/selects its existing row; a changed path requests navigation. Connected clients observe open/close requests on their next short poll. There is no automatic terminal focus command or terminal input injection.
 
+Reopening Herdr lists saved previews without opening them or loading their frames.
+Select a preview to open it; a new agent open request received while Herdr is
+connected still selects it. Old saved open requests never replace the terminal
+when the Mini App reloads or the preview broker restarts.
+
 ## Computer-side installation
 
 Keep this checkout and private configuration under your Herdr environment directory. Install gateway dependencies with `npm ci --prefix gateway` and use Node.js 22+. Append these settings to the environment directory's Git-excluded, mode-0600 `.env`; use a newly generated random secret, not the examples:
