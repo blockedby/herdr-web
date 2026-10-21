@@ -72,17 +72,30 @@ describe("private preview navigation contract", () => {
       }),
     ).toThrow();
   });
+  it("lists saved previews without replacing agents or mounting their frames on startup", () => {
+    const state = previewReducer(initialPreviewState(), {
+      type: "snapshot",
+      value: snapshot(100),
+    });
+    expect(state.selectedId).toBeNull();
+    expect(state.retainedIds).toEqual([]);
+    expect(state.seenOpen).toBe(100);
+    expect(state.snapshot?.previews).toEqual([entry]);
+    expect(previewReducer(state, { type: "select", id }).selectedId).toBe(id);
+  });
   it("opens a new agent request once, then respects returning to terminal", () => {
     let state = previewReducer(initialPreviewState(), {
       type: "snapshot",
       value: snapshot(),
     });
+    expect(state.selectedId).toBeNull();
+    state = previewReducer(state, { type: "snapshot", value: snapshot(2) });
     expect(state.selectedId).toBe(id);
     state = previewReducer(state, { type: "select", id: null });
-    state = previewReducer(state, { type: "snapshot", value: snapshot() });
+    state = previewReducer(state, { type: "snapshot", value: snapshot(2) });
     expect(state.selectedId).toBeNull();
     expect(state.retainedIds).toEqual([id]);
-    state = previewReducer(state, { type: "snapshot", value: snapshot(2) });
+    state = previewReducer(state, { type: "snapshot", value: snapshot(3) });
     expect(state.selectedId).toBe(id);
   });
   it("retains visited frames through agent/preview switches without silent draft eviction", () => {
@@ -101,10 +114,11 @@ describe("private preview navigation contract", () => {
     );
   });
   it("close removes its frame/selection and ignores a late pre-close snapshot", () => {
-    const state = previewReducer(initialPreviewState(), {
+    let state = previewReducer(initialPreviewState(), {
       type: "snapshot",
       value: snapshot(),
     });
+    state = previewReducer(state, { type: "select", id });
     const closed = previewReducer(state, {
       type: "closed",
       id,
@@ -123,6 +137,7 @@ describe("private preview navigation contract", () => {
       type: "snapshot",
       value: snapshot(),
     });
+    state = previewReducer(state, { type: "select", id });
     state = previewReducer(state, { type: "select", id: null });
     state = previewReducer(state, {
       type: "snapshot",
@@ -133,10 +148,11 @@ describe("private preview navigation contract", () => {
     expect(state.retainedIds).toEqual([id]);
   });
   it("registry replacement clears stale frames even when the new revision starts lower", () => {
-    const state = previewReducer(initialPreviewState(), {
+    let state = previewReducer(initialPreviewState(), {
       type: "snapshot",
       value: snapshot(100),
     });
+    state = previewReducer(state, { type: "select", id });
     const replacement = parsePreviewSnapshot({
       epoch: "f".repeat(32),
       revision: 0,

@@ -35,7 +35,7 @@ afterEach(async () => {
   document.body.innerHTML = "";
   vi.restoreAllMocks();
 });
-function setup() {
+function setup(open = true) {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   let state = previewReducer(initialPreviewState(), {
     type: "snapshot",
@@ -47,6 +47,7 @@ function setup() {
       lastOpen: { id, revision: 1 },
     }),
   });
+  if (open) state = previewReducer(state, { type: "select", id });
   const close = vi.fn(async () => {}),
     back = vi.fn(),
     menu = vi.fn();
@@ -104,6 +105,16 @@ function setup() {
   };
 }
 describe("compact embedded preview surface", () => {
+  it("does not load a saved app until the user selects it", async () => {
+    const ui = setup(false);
+    await ui.render();
+    expect(ui.container.querySelector("iframe")).toBeNull();
+    expect(
+      ui.container.querySelector(".preview-stage")?.hasAttribute("hidden"),
+    ).toBe(true);
+    await ui.select(id);
+    expect(ui.container.querySelector("iframe")).not.toBeNull();
+  });
   it("retains iframe identity over two terminal/other-preview cycles and removes it only on close", async () => {
     const ui = setup();
     await ui.render();
